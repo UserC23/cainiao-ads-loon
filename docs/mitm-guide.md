@@ -122,8 +122,8 @@ https://fastly.jsdelivr.net/gh/UserC23/cainiao-ads-loon@36871d7ca03f3b8cd2fb69e9
 > 以前装过的话，必须删掉旧插件、用上面的新地址重新添加 ——
 > jsDelivr 的旧路径 `/gh/UserC23/cnads-loon/...` 随改名失效。
 >
-> 建议用固定 commit 地址。改名后新路径的 `@main` 已恢复正常，
-> 但旧名下的 `@main` 曾长期卡在 v1，说明分支缓存有风险。
+> 建议用固定 commit 地址。新路径的 `@main` 能取到，但实测推完仍返回上一个提交，
+> 旧名下更是长期卡在 v1 —— 分支缓存不可靠。
 
 ---
 

@@ -30,9 +30,9 @@ https://fastly.jsdelivr.net/gh/UserC23/cainiao-ads-loon@36871d7ca03f3b8cd2fb69e9
 
 > **建议用上面这个固定 commit 地址。**
 > 仓库原名 `cnads-loon`，2026-10-31 改名为 `cainiao-ads-loon`。
-> 改名后新路径的 `@main` 已恢复正常，但旧仓库名下的 `@main` 曾被 jsDelivr
-> 长期卡在最早的 v1（5710B），强推和 `purge.jsdelivr.net` 都清不掉 ——
-> 分支缓存有风险，固定 SHA 地址是内容寻址的，永远拿到确切版本。
+> 改名后新路径的 `@main` 能用了，但实测**推完仍返回上一个提交**（会滞后），
+> 旧仓库名下的 `@main` 更是长期卡在 v1（5710B），`purge.jsdelivr.net` 都清不掉。
+> 分支缓存不可靠，固定 SHA 地址是内容寻址的，永远拿到确切版本。
 >
 > **已安装过旧插件的话，要重新添加一次这个新地址**：
 > 仓库改名后 jsDelivr 的旧路径（`/gh/UserC23/cnads-loon/...`）不再提供文件。
@@ -115,7 +115,7 @@ python tools/analyze_har.py 抓包.har --scan-ads   # 直接输出广告字段�
 | `fastly.jsdelivr.net/gh/UserC23/cainiao-ads-loon@<commit-sha>/CainiaoAds.plugin` | ✅ 推荐，内容寻址 |
 | `gcore.jsdelivr.net/gh/UserC23/cainiao-ads-loon@<commit-sha>/CainiaoAds.plugin` | ✅ |
 | `testingcf.jsdelivr.net/gh/UserC23/cainiao-ads-loon@<commit-sha>/CainiaoAds.plugin` | ✅ |
-| `.../cainiao-ads-loon@main/CainiaoAds.plugin` | ✅ 改名后正常（11774B） |
+| `.../cainiao-ads-loon@main/CainiaoAds.plugin` | ⚠️ 能取到，但会滞后一个提交 |
 | `ghproxy.net/https://raw.githubusercontent.com/UserC23/cainiao-ads-loon/main/CainiaoAds.plugin` | ✅ 实时，但依赖第三方代理 |
 | `.../cnads-loon@main/...`（旧仓库名） | ❌ 缓存卡在 v1（5710B），已随改名废弃 |
 | `cdn.jsdelivr.net/gh/...` | ❌ 主域被污染 |
