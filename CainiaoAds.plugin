@@ -1,7 +1,7 @@
 #!name=菜鸟去广告 Pro
 #!desc=v3。按 Loon 原生语法重写（[Rewrite] + response-body-json-jq），规则改为按路径匹配、不再锚定具体网关域名；新增「热门活动」模块与跳转淘宝的瀑布流广告卡片清洗。需开启 MITM 并信任证书。
 #!author=UserC23
-#!homepage=https://github.com/UserC23/cnads-loon
+#!homepage=https://github.com/UserC23/cainiao-ads-loon
 #!date=2026-10-31
 #!category=广告拦截
 

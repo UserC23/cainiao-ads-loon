@@ -6,7 +6,7 @@
 #   DOMAIN         ->  HOST
 #
 # 来源：Cainiao 4iPhone 8.11.605 真机抓包（285 条请求 / 68 个调度域名）
-# 仓库：https://github.com/UserC23/cnads-loon
+# 仓库：https://github.com/UserC23/cainiao-ads-loon
 
 # ── 1RTB 广告 SDK ──
 DOMAIN-SUFFIX,1rtb.net,REJECT

@@ -1,4 +1,4 @@
-# cnads-loon
+# cainiao-ads-loon
 
 菜鸟 App（Cainiao 4iPhone）去广告 Loon 插件。
 
@@ -25,14 +25,17 @@ Loon → 设置 → **证书管理** → 生成并安装证书
 先删除已安装的 v1/v2（两套规则会打架），然后 Loon → 配置 → 插件 → 右上角 `+` → 从 URL 添加：
 
 ```
-https://fastly.jsdelivr.net/gh/UserC23/cnads-loon@69b3ac2a41f2de556fd319da0162a3a0ab747d15/CainiaoAds.plugin
+https://fastly.jsdelivr.net/gh/UserC23/cainiao-ads-loon@69b3ac2a41f2de556fd319da0162a3a0ab747d15/CainiaoAds.plugin
 ```
 
-> **请务必用上面这个固定 commit 地址，不要用 `@main`。**
-> 实测本仓库的 `@main` 被 jsDelivr 缓存卡在最早的 v1（5710B），
-> 强推后仍不刷新，`purge.jsdelivr.net` 也清不掉。
-> 用 `@main` 装到的会是 v1 —— 这也是"装了新版本却毫无变化"的一个隐藏原因。
-> 固定 SHA 地址是内容寻址的，永远拿到确切版本。
+> **建议用上面这个固定 commit 地址。**
+> 仓库原名 `cnads-loon`，2026-10-31 改名为 `cainiao-ads-loon`。
+> 改名后新路径的 `@main` 已恢复正常，但旧仓库名下的 `@main` 曾被 jsDelivr
+> 长期卡在最早的 v1（5710B），强推和 `purge.jsdelivr.net` 都清不掉 ——
+> 分支缓存有风险，固定 SHA 地址是内容寻址的，永远拿到确切版本。
+>
+> **已安装过旧插件的话，要重新添加一次这个新地址**：
+> 仓库改名后 jsDelivr 的旧路径（`/gh/UserC23/cnads-loon/...`）不再提供文件。
 
 ### 3. 重启 App
 
@@ -109,11 +112,12 @@ python tools/analyze_har.py 抓包.har --scan-ads   # 直接输出广告字段�
 
 | 地址 | 实测 |
 |---|---|
-| `fastly.jsdelivr.net/gh/UserC23/cnads-loon@<commit-sha>/CainiaoAds.plugin` | ✅ 推荐，内容寻址 |
-| `gcore.jsdelivr.net/gh/UserC23/cnads-loon@<commit-sha>/CainiaoAds.plugin` | ✅ |
-| `testingcf.jsdelivr.net/gh/UserC23/cnads-loon@<commit-sha>/CainiaoAds.plugin` | ✅ |
-| `ghproxy.net/https://raw.githubusercontent.com/UserC23/cnads-loon/main/CainiaoAds.plugin` | ✅ 实时，但依赖第三方代理 |
-| `...@main/CainiaoAds.plugin`（各节点） | ❌ 缓存卡在 v1（5710B），purge 无效 |
+| `fastly.jsdelivr.net/gh/UserC23/cainiao-ads-loon@<commit-sha>/CainiaoAds.plugin` | ✅ 推荐，内容寻址 |
+| `gcore.jsdelivr.net/gh/UserC23/cainiao-ads-loon@<commit-sha>/CainiaoAds.plugin` | ✅ |
+| `testingcf.jsdelivr.net/gh/UserC23/cainiao-ads-loon@<commit-sha>/CainiaoAds.plugin` | ✅ |
+| `.../cainiao-ads-loon@main/CainiaoAds.plugin` | ✅ 改名后正常（11774B） |
+| `ghproxy.net/https://raw.githubusercontent.com/UserC23/cainiao-ads-loon/main/CainiaoAds.plugin` | ✅ 实时，但依赖第三方代理 |
+| `.../cnads-loon@main/...`（旧仓库名） | ❌ 缓存卡在 v1（5710B），已随改名废弃 |
 | `cdn.jsdelivr.net/gh/...` | ❌ 主域被污染 |
 | `raw.githubusercontent.com/...` | ❌ 直连不通 |
 
