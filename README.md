@@ -25,7 +25,7 @@ Loon → 设置 → **证书管理** → 生成并安装证书
 先删除已安装的 v1/v2（两套规则会打架），然后 Loon → 配置 → 插件 → 右上角 `+` → 从 URL 添加：
 
 ```
-https://fastly.jsdelivr.net/gh/UserC23/cainiao-ads-loon@69b3ac2a41f2de556fd319da0162a3a0ab747d15/CainiaoAds.plugin
+https://fastly.jsdelivr.net/gh/UserC23/cainiao-ads-loon@36871d7ca03f3b8cd2fb69e9167e071c4d7e48df/CainiaoAds.plugin
 ```
 
 > **建议用上面这个固定 commit 地址。**

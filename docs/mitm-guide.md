@@ -112,7 +112,7 @@ del(.. | select(...)) | del(.. | select(...)) | del(.. | select(...))
 3. Loon → 配置 → 插件 → 右上角 `+` → 从 URL 添加：
 
 ```
-https://fastly.jsdelivr.net/gh/UserC23/cainiao-ads-loon@69b3ac2a41f2de556fd319da0162a3a0ab747d15/CainiaoAds.plugin
+https://fastly.jsdelivr.net/gh/UserC23/cainiao-ads-loon@36871d7ca03f3b8cd2fb69e9167e071c4d7e48df/CainiaoAds.plugin
 ```
 
 4. 确认插件开关为**启用**
