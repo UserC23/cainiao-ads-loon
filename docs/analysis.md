@@ -7,6 +7,10 @@
 > [mitm-guide.md](mitm-guide.md)。
 > 本文档仍然有效 —— 它准确刻画了广告 SDK 的存在与调度结构，只是**不能**靠它
 > 得出"拦域名即可去广告"的结论。
+>
+> v2 之后又发现两个更深的问题（Loon 段落名写成了 Surge 语法、规则锚错了网关），
+> v3 已全部修正。演进过程见 [CHANGELOG.md](../CHANGELOG.md)，
+> 安装 v2 后的抓包分析见 [analysis-v3-har.md](analysis-v3-har.md)。
 
 数据来源：`293_1793435100507.har`（Loon 导出，HAR 1.0）
 

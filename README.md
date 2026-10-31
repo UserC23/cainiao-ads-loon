@@ -2,45 +2,109 @@
 
 菜鸟 App（Cainiao 4iPhone）去广告 Loon 插件。
 
-**v2 是 MITM 版**：拦截 MTop 广告位接口 + 改写页面响应体删除广告字段。
-v1 的纯域名拦截方案实测无效，原因见 [docs/mitm-guide.md](docs/mitm-guide.md#一为什么-v1-完全没效果)。
-
 - 适用 App 版本：`8.11.605`（抓包基线）
-- 需要：开启 MITM + 安装并信任证书
-- 覆盖：首页瀑布流、搜索栏广告词、接寄券、活动弹窗、飞猪广告位
-- 详细说明：[docs/mitm-guide.md](docs/mitm-guide.md) ｜ 抓包分析：[docs/analysis.md](docs/analysis.md)
+- 需要：**开启 MITM + 安装证书 + 在「证书信任设置」里开启完全信任**
+- 当前版本：**v3**（历史版本见 [CHANGELOG.md](CHANGELOG.md)，v2 原文保留在 [`archive/`](archive/)）
+- 详细说明：[docs/mitm-guide.md](docs/mitm-guide.md) ｜ 抓包分析：[docs/analysis-v3-har.md](docs/analysis-v3-har.md)
 
 ---
 
 ## 安装
 
-### 1. 先开 MITM
+### 1. 先开 MITM（这步不做，插件一行都不执行）
 
-Loon → 设置 → **MitM** → 打开
-Loon → 设置 → **证书管理** → 生成并安装证书 → 到 iOS「设置 → 通用 → VPN与设备管理」**信任**它
+Loon → 设置 → **MitM** → 打开开关
+Loon → 设置 → **证书管理** → 生成并安装证书
+→ 系统「设置 → 通用 → VPN与设备管理」安装描述文件
+→ **系统「设置 → 通用 → 关于本机 → 证书信任设置」打开 Loon 证书的完全信任**
 
-> 不开 MITM、不信任证书，这个插件**一行都不会生效**。这是最常见的失效原因。
+> 最后一步最容易漏。只在「VPN与设备管理」里看到证书**不算信任**。
 
-### 2. 添加插件
+### 2. 删掉旧版插件，再添加 v3
 
-Loon → 配置 → 插件 → 右上角 `+` → 从 URL 添加：
+先删除已安装的 v1/v2（两套规则会打架），然后 Loon → 配置 → 插件 → 右上角 `+` → 从 URL 添加：
 
 ```
 https://fastly.jsdelivr.net/gh/UserC23/cnads-loon@main/CainiaoAds.plugin
 ```
 
-> **更新后想立刻生效，用固定 commit 的地址**（`@main` 会被 jsDelivr 缓存约 12 小时，
-> 缓存期内拉到的还是旧版）：
+> jsDelivr 对 `@main` 有约 12 小时缓存。想立刻拿到最新版，用固定 commit：
 > ```
-> https://fastly.jsdelivr.net/gh/UserC23/cnads-loon@b52a2d381de8b977c3c2e875caf4ceb55f025422/CainiaoAds.plugin
+> https://fastly.jsdelivr.net/gh/UserC23/cnads-loon@v3-COMMIT-SHA/CainiaoAds.plugin
 > ```
-> 装 v2 之前，**先把已安装的旧插件删掉**，否则两套规则会同时存在。
 
 ### 3. 重启 App
 
-菜鸟**上滑彻底杀掉**再重开，广告才会消失。App 有缓存，只切后台不杀进程无效。
+菜鸟**上滑彻底杀掉**再重开。只切后台无效，页面 JSON 有缓存。
 
-### CDN 地址实测
+---
+
+## 做了什么
+
+| 层 | 手段 | 作用对象 | 默认 |
+|---|---|---|---|
+| A | `reject-dict` | 广告位接口：`nbnetflow.ads.*`、`adx.flyad.getad`、`adkeyword`、小程序推荐 CPC、开屏/启动 | ✅ |
+| B | `reject-dict` | 活动中心 `cnactivitycenter`、龙泉运营位、tabbar 营销 | ✅ |
+| C | `reject-dict` | 主流程接口（`homepage.merge` 等，会让页面空白） | ❌ |
+| 响应体 | `response-body-json-jq` | 页面 JSON 里的「热门活动」模块、广告卡片、搜索框广告词 | ✅ |
+| 域名 | `[Rule]` | 1RTB、穿山甲/巨量、TanX、神马汇川（14 个域名） | ✅ |
+
+`reject-dict` 返回 HTTP 200 + `{}`，App 解析成「这次没广告」，容器渲染为空，不会白屏也不会报网络错误。
+
+### 页面 JSON 清洗
+
+广告和正常内容是混在同一个 JSON 里返回的，不能整包拒绝，只能定点删。v3 的核心规则是一条 jq 表达式：
+
+```jq
+del(.. | select(type == "object" and (...title 匹配 热门活动/活动中心/领券中心...)))
+| del(.. | select(type == "object" and (has("adInfo") or has("adZoneId") or has("cpcInfo") ...)))
+| del(.. | select(type == "object" and (...cardType/bizType = ad...)))
+```
+
+## v3 修掉了 v2 的三处错位
+
+v2 "装了跟没装一样"不是规则不够多，是根本没被执行：
+
+| # | 问题 | v3 |
+|---|---|---|
+| 1 | 用了 Surge 段落名 `[URL Rewrite]` / `[Body Rewrite]`，Loon 只认 `[Rewrite]` + `response-body-json-jq` | 全部改成 Loon 原生语法 |
+| 2 | 规则锚死 `cn-acs.m.cainiao.com`，实际网关是 `guide-acs.m.taobao.com` | 改成 `^https?://[^/]+/gw/mtop\.…` 按路径匹配 |
+| 3 | MITM 主机逐个列了 17 个，漏 `cnactivitycenter-mtop` 等 | `*.cainiao.com` 通配 + 3 个淘宝网关 |
+
+细节见 [CHANGELOG.md](CHANGELOG.md)。
+
+---
+
+## 版本归档
+
+| 版本 | 文件 | 说明 |
+|---|---|---|
+| v3 | [`CainiaoAds.plugin`](CainiaoAds.plugin) | 当前版本 |
+| v2 | [`archive/CainiaoAds-v2.plugin`](archive/CainiaoAds-v2.plugin) | 原文保留，可回滚 |
+| v1 | git 提交 `7a3e35a` | 纯域名版，已被覆盖 |
+
+回滚到 v2 的话，用 `archive/CainiaoAds-v2.plugin` 的固定 commit 地址安装，并先卸载 v3。
+注意 v2 在 Loon 里不会生效（段落名问题），仅作留档。
+
+---
+
+## 有残留广告怎么办
+
+别猜字段，用脚本定位：
+
+```bash
+python tools/analyze_har.py 抓包.har --check      # 先确认 MITM 真的在解密
+python tools/analyze_har.py 抓包.har --scan-ads   # 直接输出广告字段路径
+```
+
+`--check` 是前置条件：如果输出 `❌ 没有任何 HTTPS 请求`，说明 MITM 没生效，
+此时任何分析都没有意义 —— 插件里的 `[Rewrite]` 一条都不会执行。
+
+详细流程见 [docs/mitm-guide.md 第四节](docs/mitm-guide.md#四还有广告怎么办)。
+
+---
+
+## CDN 地址实测
 
 | 地址 | 实测 |
 |---|---|
@@ -51,67 +115,19 @@ https://fastly.jsdelivr.net/gh/UserC23/cnads-loon@main/CainiaoAds.plugin
 | `https://cdn.jsdelivr.net/gh/...` | ❌ 主域被污染 |
 | `https://raw.githubusercontent.com/...` | ❌ 直连不通 |
 
-jsDelivr 缓存约 12 小时。仓库更新后想立刻生效，把 `@main` 换成具体 commit SHA。
-
----
-
-## 做了什么
-
-### 广告位接口拦截（`reject-dict`）
-
-| 接口 | 说明 |
-|---|---|
-| `mtop.cainiao.guoguo.nbnetflow.ads.*` | 广告位主接口：批量拉取 / 曝光回执 / 索引 |
-| `mtop.cainiao.adx.flyad.getad` | 飞猪广告位 |
-| `mtop.cainiao.adkeyword.get` | 搜索栏广告关键词 |
-| `mtop.cainiao.nbopen.miniapp.recommend.cpc` | 小程序推荐位 CPC |
-| `mtop.cainiao.nbmensa.research.researchservice.*` | 打断式调研弹窗 |
-| `com.cainiao.cnactivitycenter` 等 | 营销/活动弹窗 |
-
-用 `reject-dict` 返回 `{}` 而不是断连 —— App 解析成"无广告"，广告容器渲染为空，
-不会白屏也不会报网络错误。
-
-### 页面响应体改写（`http-response-jq`）
-
-页面引擎接口（`mtop.cainiao.app.e2e.engine.page.fetch`）里，广告是跟正常内容混在
-一个 JSON 里返回的。不能整包拒绝，只能定点删除：
-
-```jq
-del(.data.data.data.mainSearch.bizData.searchContents, .data.data.data.operationList)
-```
-
-### 域名级拦截（保留 v1）
-
-1RTB、穿山甲/巨量、阿里妈妈 TanX、神马汇川，共 14 个域名。这些是第三方广告 SDK
-的素材与上报链路，拦掉能减少下载和上报，但**不是广告内容的下发通道**。
-
-## 故意没拦
-
-| 域名 | 原因 |
-|---|---|
-| `amdc.m.taobao.com` | MTop 域名调度中心，不是广告。插件里给了按 UA 限定的可选拦截，默认关闭 |
-| `ynuf.aliapp.org`、`fourier.taobao.com`、`fourier.alibaba.com` | 设备指纹，拦了有触发风控的风险 |
-
----
-
-## 有残留广告怎么办
-
-不保证你这个 App 版本全中，接口名会随版本变化。定位流程写在这里：
-[docs/mitm-guide.md 第四节](docs/mitm-guide.md#四还有残留广告怎么定位)
-
-一句话版本：开 Loon 请求日志 → 进有广告的页面 → 找响应体大的 `*-mtop.cainiao.com`
-请求 → 看响应里的广告字段 → 补一条规则。
-
 ---
 
 ## 文件结构
 
 ```
-CainiaoAds.plugin       Loon 插件（MITM 版，主文件）
-rules/CainiaoAds.list   纯域名规则（辅助层，Surge/Shadowrocket/Stash 可用）
-docs/mitm-guide.md      MITM 安装、验证、调优、排错
-docs/analysis.md        抓包分析（285 条请求 / 68 调度域名）
-tools/analyze_har.py    HAR 分析脚本
+CainiaoAds.plugin             Loon 插件 v3（主文件，直接装这个）
+archive/CainiaoAds-v2.plugin  v2 原文留档
+rules/CainiaoAds.list         纯域名规则（Surge/Shadowrocket/Stash 可用，不含 MITM 部分）
+docs/mitm-guide.md            安装、验证、定位残留广告、排错
+docs/analysis.md              v1 抓包分析（285 条 / 68 调度域名）
+docs/analysis-v3-har.md       v2 安装后抓包分析（证明 MITM 未生效）
+tools/analyze_har.py          HAR 分析脚本（--check / --scan-ads / --dispatch）
+CHANGELOG.md                  三个版本的问题与修正
 ```
 
 ## 免责

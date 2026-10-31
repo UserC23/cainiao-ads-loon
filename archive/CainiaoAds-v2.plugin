@@ -1,0 +1,125 @@
+#!name=菜鸟去广告 Pro
+#!desc=MITM 版菜鸟去广告。拦截 MTop 广告位接口 + 改写页面响应体删除广告容器。覆盖首页瀑布流、搜索栏广告词、接寄券、活动弹窗、飞猪广告位。需开启 MITM 并信任证书。
+#!author=UserC23
+#!homepage=https://github.com/UserC23/cnads-loon
+#!date=2026-10-31
+
+# ─────────────────────────────────────────────────────────────
+# 使用前提（缺一不可，否则插件完全不生效）
+#   1. Loon 设置里打开 MitM
+#   2. 安装并【信任】Loon 的根证书（设置 → 证书管理 → 安装 → 到系统设置里信任）
+#   3. App 完全退出后重开
+#
+# 为什么 v1（纯域名拦截）没用：
+#   菜鸟的广告不是由独立广告域名下发的，而是挂在业务 MTop 网关
+#   （cn-acs.m.cainiao.com 等）的接口里返回，属于「业务响应里带的广告位」。
+#   只在域名层 REJECT，根本碰不到这些响应。
+# ─────────────────────────────────────────────────────────────
+
+[MITM]
+hostname = cn-acs.m.cainiao.com, e2e-mtop.cainiao.com, nbcps-mtop.cainiao.com, netflow-mtop.cainiao.com, netflow-reply-mtop.cainiao.com, home-bff-mtop.cainiao.com, mtop-bff-mtop.cainiao.com, tenant1-bff-mtop.cainiao.com, community-mtop.cainiao.com, nbfriend-mtop.cainiao.com, longquan-mtop.cainiao.com, caps-mtop.cainiao.com, caaps-mtop.cainiao.com, cn-lde-mtop.cainiao.com, cncreditmarket-mtop.cainiao.com, gguser-mtop.cainiao.com, cnt-app-uic-mtop.cainiao.com, guide-acs.m.taobao.com, acs.m.taobao.com, msgacs.m.taobao.com, h5api.m.taobao.com
+
+[URL Rewrite]
+# ═════════════════════════════════════════════════════════════
+# A 级｜明确的广告位接口 —— 默认开启
+# 用 reject-dict 返回 {}，不是断连：App 拿到空 JSON 会当作「无广告」，
+# 广告容器渲染为空，不会白屏或报错。这是比 REJECT 更稳的做法。
+# ═════════════════════════════════════════════════════════════
+
+# 广告位主接口：批量拉取 / 曝光回执 / 广告索引
+# 对应 mtop.cainiao.guoguo.nbnetflow.ads.batch.show.v2、expose.mreply、index
+^https://cn-acs\.m\.cainiao\.com/gw/mtop\.cainiao\.guoguo\.nbnetflow\.ads\. reject-dict
+^https://netflow-mtop\.cainiao\.com/gw/mtop\.cainiao\.guoguo\.nbnetflow\.ads\. reject-dict
+
+# 飞猪广告位（adx.flyad）—— 名字里就写着 ad，最没争议的一个
+^https://guide-acs\.m\.taobao\.com/gw/mtop\.cainiao\.adx\.flyad\.getad reject-dict
+
+# 搜索栏下方广告关键词
+^https://cn-acs\.m\.cainiao\.com/gw/mtop\.cainiao\.adkeyword\.get reject-dict
+
+# 小程序推荐位 CPC 广告
+^https://cn-acs\.m\.cainiao\.com/gw/mtop\.cainiao\.nbopen\.miniapp\.recommend\.cpc reject-dict
+
+# 调研/问卷弹窗（打断式运营位，不是商品）
+^https://cn-acs\.m\.cainiao\.com/gw/mtop\.cainiao\.nbmensa\.research\.researchservice\. reject-dict
+
+# ═════════════════════════════════════════════════════════════
+# B 级｜营销 / 活动弹窗 —— 默认开启，若发现领券异常可注释
+# ═════════════════════════════════════════════════════════════
+^https://cn-acs\.m\.cainiao\.com/gw/mtop\.com\.cainiao\.cnactivitycenter reject-dict
+^https://cn-acs\.m\.cainiao\.com/gw/mtop\.com\.cainiao\.longquan\.place\.getpageresourcecontent reject-dict
+^https://cn-acs\.m\.cainiao\.com/gw/mtop\.cainiao\.nbpresentation\.tabbar\.marketing\.get reject-dict
+
+# ═════════════════════════════════════════════════════════════
+# C 级｜主流程接口 —— 默认关闭，风险自担
+# 这几条能把首页广告清得更干净，但它们同时承载正常内容，
+# 拦掉可能变成「页面空白」或「领券失败」。确认能接受再打开。
+# ═════════════════════════════════════════════════════════════
+# ^https://cn-acs\.m\.cainiao\.com/gw/mtop\.cainiao\.nbpresentation\.homepage\.merge reject-dict
+# ^https://nbcps-mtop\.cainiao\.com/gw/mtop\.cainiao\.nbcps\.presentation\.fetch reject-dict
+# ^https://cn-acs\.m\.cainiao\.com/gw/mtop\.com\.cainiao\.cncreditmarket\.hit\.getactivityhit reject-dict
+
+[Body Rewrite]
+# ═════════════════════════════════════════════════════════════
+# 页面引擎接口：广告是塞在正常页面 JSON 的某些字段里返回的，
+# 不能整包 reject（会把整个首页干掉），只能定点 del 字段。
+# ═════════════════════════════════════════════════════════════
+
+# 首页：删除搜索框内的广告词位 + 运营位列表
+http-response-jq ^https://(cn-acs\.m|e2e-mtop|home-bff-mtop|mtop-bff-mtop|tenant1-bff-mtop)\.cainiao\.com/gw/mtop\.cainiao\.app\.e2e\.engine\.page\.fetch 'del(.data.data.data.mainSearch.bizData.searchContents, .data.data.data.operationList)'
+
+# 我的页面：删除 banner 与活动位
+http-response-jq ^https://e2e-mtop\.cainiao\.com/gw/mtop\.cainiao\.app\.e2e\.engine\.page\.fetch\.cn 'del(.data.data.banner, .data.data.activity)'
+
+# ═════════════════════════════════════════════════════════════
+# 通用清洗（默认关闭）
+# 按字段名递归删除广告容器，不依赖具体路径，适合接口改版后救急。
+# 打开它 = 所有匹配到的 cainiao mtop 响应都会被 walk 一遍，
+# 开销较大，且字段名命中即删，有一定误伤可能。
+# ═════════════════════════════════════════════════════════════
+# http-response-jq ^https://[a-z0-9-]+-mtop\.cainiao\.com/gw/mtop\. 'walk(if type == "object" then with_entries(select((.key | test("^(ads?|adList|adItems|adInfo|adData|adJson|adMaterial|adCard|adBanner)$"; "i")) | not)) else . end)'
+# http-response-jq ^https://cn-acs\.m\.cainiao\.com/gw/mtop\. 'walk(if type == "object" then with_entries(select((.key | test("^(ads?|adList|adItems|adInfo|adData|adJson|adMaterial|adCard|adBanner)$"; "i")) | not)) else . end)'
+
+[Rule]
+# ═════════════════════════════════════════════════════════════
+# 域名级拦截（v1 保留，作为辅助层）
+# 这些是真广告 SDK 的域名，拦掉能减少素材下载与上报，
+# 但它们不是广告内容的下发通道 —— 真正的内容在 MTop 接口里。
+# ═════════════════════════════════════════════════════════════
+
+# 1RTB 广告 SDK
+DOMAIN-SUFFIX,1rtb.net,REJECT
+DOMAIN-SUFFIX,1rtb.com,REJECT
+
+# 穿山甲 / 巨量引擎
+DOMAIN-SUFFIX,pglstatp-toutiao.com,REJECT
+DOMAIN-SUFFIX,pangolin-sdk-toutiao.com,REJECT
+DOMAIN-SUFFIX,ctobsnssdk.com,REJECT
+DOMAIN,pgdt.ugdtimg.com,REJECT
+DOMAIN,p26-sign.douyinpic.com,REJECT
+
+# 阿里妈妈 / TanX
+DOMAIN-SUFFIX,tanx.com,REJECT
+DOMAIN,h-adashx.ut.cainiao.com,REJECT
+DOMAIN,admonitor-feedback.cn-hangzhou.log.aliyuncs.com,REJECT
+
+# 神马 / UC 汇川
+DOMAIN,huichuan-mc.sm.cn,REJECT
+DOMAIN,image.uczzd.cn,REJECT
+
+# ═════════════════════════════════════════════════════════════
+# 可选：掐掉 AMDC 域名调度（默认关闭）
+# 抓包里 281/285 条请求都打在这个调度器上，纯噪音。用 USER-AGENT 限定
+# 只对菜鸟 App 生效，不影响别的 App。调度失败时 App 会回落本地 DNS，
+# 通常不影响使用 —— 但这是「赌」，介意稳定性就别开。
+# ═════════════════════════════════════════════════════════════
+# AND,((USER-AGENT,Cainiao4iPhone*), (DOMAIN,amdc.m.taobao.com,extended-matching)),REJECT
+
+# ═════════════════════════════════════════════════════════════
+# 明确不拦
+#   amdc.m.taobao.com    动态域名调度中心（见上面可选项）
+#   ynuf.aliapp.org      设备指纹
+#   fourier.taobao.com   设备指纹
+#   fourier.alibaba.com  设备指纹
+#   拦住设备指纹有触发风控的风险，收益极低。
+# ═════════════════════════════════════════════════════════════
