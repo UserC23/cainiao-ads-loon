@@ -29,6 +29,13 @@ Loon → 配置 → 插件 → 右上角 `+` → 从 URL 添加：
 https://fastly.jsdelivr.net/gh/UserC23/cnads-loon@main/CainiaoAds.plugin
 ```
 
+> **更新后想立刻生效，用固定 commit 的地址**（`@main` 会被 jsDelivr 缓存约 12 小时，
+> 缓存期内拉到的还是旧版）：
+> ```
+> https://fastly.jsdelivr.net/gh/UserC23/cnads-loon@b52a2d381de8b977c3c2e875caf4ceb55f025422/CainiaoAds.plugin
+> ```
+> 装 v2 之前，**先把已安装的旧插件删掉**，否则两套规则会同时存在。
+
 ### 3. 重启 App
 
 菜鸟**上滑彻底杀掉**再重开，广告才会消失。App 有缓存，只切后台不杀进程无效。
