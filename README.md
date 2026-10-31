@@ -28,9 +28,9 @@ Loon → 设置 → **证书管理** → 生成并安装证书
 https://fastly.jsdelivr.net/gh/UserC23/cnads-loon@main/CainiaoAds.plugin
 ```
 
-> jsDelivr 对 `@main` 有约 12 小时缓存。想立刻拿到最新版，用固定 commit：
+> jsDelivr 对 `@main` 有约 12 小时缓存。想立刻拿到 v3，用固定 commit：
 > ```
-> https://fastly.jsdelivr.net/gh/UserC23/cnads-loon@v3-COMMIT-SHA/CainiaoAds.plugin
+> https://fastly.jsdelivr.net/gh/UserC23/cnads-loon@69b3ac2a41f2de556fd319da0162a3a0ab747d15/CainiaoAds.plugin
 > ```
 
 ### 3. 重启 App
