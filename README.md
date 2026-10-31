@@ -15,20 +15,27 @@
 
 ### Loon
 
-在 Loon 里依次进入 **配置 → 插件 → 右上角 + → 从 URL 添加**，粘贴下面任一地址：
+在 Loon 里依次进入 **配置 → 插件 → 右上角 + → 从 URL 添加**，粘贴：
 
 ```
-https://cdn.jsdelivr.net/gh/UserC23/cnads-loon@main/CainiaoAds.plugin
-```
-
-`raw.githubusercontent.com` 在国内经常连不上，优先用上面的 jsDelivr。
-如果 jsDelivr 也不通，用直连：
-
-```
-https://raw.githubusercontent.com/UserC23/cnads-loon/main/CainiaoAds.plugin
+https://fastly.jsdelivr.net/gh/UserC23/cnads-loon@main/CainiaoAds.plugin
 ```
 
 添加后确认插件已启用即可，**不用开 MITM，也不用装证书**。
+
+### 关于 CDN 地址
+
+`cdn.jsdelivr.net` 主域和 `raw.githubusercontent.com` 在国内经常被污染或直连不通，
+所以上面用的是 jsDelivr 的 **fastly** 子域。以下地址均已实测可通，可任选：
+
+| 地址 | 实测 |
+|---|---|
+| `https://fastly.jsdelivr.net/gh/UserC23/cnads-loon@main/CainiaoAds.plugin` | ✅ |
+| `https://gcore.jsdelivr.net/gh/UserC23/cnads-loon@main/CainiaoAds.plugin` | ✅ |
+| `https://testingcf.jsdelivr.net/gh/UserC23/cnads-loon@main/CainiaoAds.plugin` | ✅ |
+| `https://ghproxy.net/https://raw.githubusercontent.com/UserC23/cnads-loon/main/CainiaoAds.plugin` | ✅ |
+| `https://cdn.jsdelivr.net/gh/...` | ❌ 主域被污染 |
+| `https://raw.githubusercontent.com/...` | ❌ 直连不通 |
 
 > jsDelivr 有缓存（约 12 小时）。仓库更新后想立刻生效，把地址里的 `@main`
 > 换成具体的 commit SHA。
@@ -39,7 +46,7 @@ https://raw.githubusercontent.com/UserC23/cnads-loon/main/CainiaoAds.plugin
 remote rule 引用：
 
 ```
-https://cdn.jsdelivr.net/gh/UserC23/cnads-loon@main/rules/CainiaoAds.list
+https://fastly.jsdelivr.net/gh/UserC23/cnads-loon@main/rules/CainiaoAds.list
 ```
 
 Quantumult X 需要改关键字（文件头有说明）：`DOMAIN-SUFFIX` → `HOST-SUFFIX`，
