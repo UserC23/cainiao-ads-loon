@@ -34,8 +34,9 @@ https://fastly.jsdelivr.net/gh/UserC23/cainiao-ads-loon@36871d7ca03f3b8cd2fb69e9
 > 旧仓库名下的 `@main` 更是长期卡在 v1（5710B），`purge.jsdelivr.net` 都清不掉。
 > 分支缓存不可靠，固定 SHA 地址是内容寻址的，永远拿到确切版本。
 >
-> **已安装过旧插件的话，要重新添加一次这个新地址**：
-> 仓库改名后 jsDelivr 的旧路径（`/gh/UserC23/cnads-loon/...`）不再提供文件。
+> **已安装过旧插件的话，要重新添加一次这个新地址。**
+> 仓库改名后，jsDelivr 的旧路径（`/gh/UserC23/cnads-loon/...`）不会再更新，
+> 实测仍返回缓存的 v1（5710B）——装新地址才能拿到 v3。
 
 ### 3. 重启 App
 
