@@ -112,18 +112,17 @@ del(.. | select(...)) | del(.. | select(...)) | del(.. | select(...))
 3. Loon → 配置 → 插件 → 右上角 `+` → 从 URL 添加：
 
 ```
-https://fastly.jsdelivr.net/gh/UserC23/cnads-loon@main/CainiaoAds.plugin
+https://fastly.jsdelivr.net/gh/UserC23/cnads-loon@69b3ac2a41f2de556fd319da0162a3a0ab747d15/CainiaoAds.plugin
 ```
 
 4. 确认插件开关为**启用**
 5. 菜鸟 App **上滑彻底杀掉**，重新打开（只切后台无效，页面有缓存）
 
-> **更新后想立刻生效，用固定 commit 的地址。**
-> jsDelivr 对 `@main` 有约 12 小时缓存，缓存期内拉到的还是旧版：
-> ```
-> https://fastly.jsdelivr.net/gh/UserC23/cnads-loon@<commit-sha>/CainiaoAds.plugin
-> ```
-> 具体 SHA 见 [README](../README.md) 顶部。
+> **别用 `@main`。**
+> 本仓库的 `@main` 被 jsDelivr 缓存卡在最早的 v1（5710B），强推不刷新、
+> `purge.jsdelivr.net` 也清不掉。用 `@main` 装到的会是 v1 ——
+> 这正是"换了新版本却毫无变化"的隐藏原因之一。
+> 上面的固定 SHA 地址是内容寻址的，永远拿到确切版本。
 
 ---
 

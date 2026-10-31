@@ -25,13 +25,14 @@ Loon → 设置 → **证书管理** → 生成并安装证书
 先删除已安装的 v1/v2（两套规则会打架），然后 Loon → 配置 → 插件 → 右上角 `+` → 从 URL 添加：
 
 ```
-https://fastly.jsdelivr.net/gh/UserC23/cnads-loon@main/CainiaoAds.plugin
+https://fastly.jsdelivr.net/gh/UserC23/cnads-loon@69b3ac2a41f2de556fd319da0162a3a0ab747d15/CainiaoAds.plugin
 ```
 
-> jsDelivr 对 `@main` 有约 12 小时缓存。想立刻拿到 v3，用固定 commit：
-> ```
-> https://fastly.jsdelivr.net/gh/UserC23/cnads-loon@69b3ac2a41f2de556fd319da0162a3a0ab747d15/CainiaoAds.plugin
-> ```
+> **请务必用上面这个固定 commit 地址，不要用 `@main`。**
+> 实测本仓库的 `@main` 被 jsDelivr 缓存卡在最早的 v1（5710B），
+> 强推后仍不刷新，`purge.jsdelivr.net` 也清不掉。
+> 用 `@main` 装到的会是 v1 —— 这也是"装了新版本却毫无变化"的一个隐藏原因。
+> 固定 SHA 地址是内容寻址的，永远拿到确切版本。
 
 ### 3. 重启 App
 
@@ -108,12 +109,13 @@ python tools/analyze_har.py 抓包.har --scan-ads   # 直接输出广告字段�
 
 | 地址 | 实测 |
 |---|---|
-| `https://fastly.jsdelivr.net/gh/UserC23/cnads-loon@main/CainiaoAds.plugin` | ✅ |
-| `https://gcore.jsdelivr.net/gh/UserC23/cnads-loon@main/CainiaoAds.plugin` | ✅ |
-| `https://testingcf.jsdelivr.net/gh/UserC23/cnads-loon@main/CainiaoAds.plugin` | ✅ |
-| `https://ghproxy.net/https://raw.githubusercontent.com/UserC23/cnads-loon/main/CainiaoAds.plugin` | ✅ |
-| `https://cdn.jsdelivr.net/gh/...` | ❌ 主域被污染 |
-| `https://raw.githubusercontent.com/...` | ❌ 直连不通 |
+| `fastly.jsdelivr.net/gh/UserC23/cnads-loon@<commit-sha>/CainiaoAds.plugin` | ✅ 推荐，内容寻址 |
+| `gcore.jsdelivr.net/gh/UserC23/cnads-loon@<commit-sha>/CainiaoAds.plugin` | ✅ |
+| `testingcf.jsdelivr.net/gh/UserC23/cnads-loon@<commit-sha>/CainiaoAds.plugin` | ✅ |
+| `ghproxy.net/https://raw.githubusercontent.com/UserC23/cnads-loon/main/CainiaoAds.plugin` | ✅ 实时，但依赖第三方代理 |
+| `...@main/CainiaoAds.plugin`（各节点） | ❌ 缓存卡在 v1（5710B），purge 无效 |
+| `cdn.jsdelivr.net/gh/...` | ❌ 主域被污染 |
+| `raw.githubusercontent.com/...` | ❌ 直连不通 |
 
 ---
 
