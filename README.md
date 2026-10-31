@@ -2,31 +2,38 @@
 
 菜鸟 App（Cainiao 4iPhone）去广告 Loon 插件。
 
-规则全部来自真机抓包分析，纯 `[Rule]` 域名级拦截，**不需要 MITM，不需要装证书**。
+**v2 是 MITM 版**：拦截 MTop 广告位接口 + 改写页面响应体删除广告字段。
+v1 的纯域名拦截方案实测无效，原因见 [docs/mitm-guide.md](docs/mitm-guide.md#一为什么-v1-完全没效果)。
 
-- App 版本：`8.11.605`
-- 抓包：Loon HAR，285 条请求 / 68 个调度域名
-- 拦截目标：1RTB、穿山甲/巨量引擎、阿里妈妈 TanX、神马汇川
-- 详细分析：[docs/analysis.md](docs/analysis.md)
+- 适用 App 版本：`8.11.605`（抓包基线）
+- 需要：开启 MITM + 安装并信任证书
+- 覆盖：首页瀑布流、搜索栏广告词、接寄券、活动弹窗、飞猪广告位
+- 详细说明：[docs/mitm-guide.md](docs/mitm-guide.md) ｜ 抓包分析：[docs/analysis.md](docs/analysis.md)
 
 ---
 
 ## 安装
 
-### Loon
+### 1. 先开 MITM
 
-在 Loon 里依次进入 **配置 → 插件 → 右上角 + → 从 URL 添加**，粘贴：
+Loon → 设置 → **MitM** → 打开
+Loon → 设置 → **证书管理** → 生成并安装证书 → 到 iOS「设置 → 通用 → VPN与设备管理」**信任**它
+
+> 不开 MITM、不信任证书，这个插件**一行都不会生效**。这是最常见的失效原因。
+
+### 2. 添加插件
+
+Loon → 配置 → 插件 → 右上角 `+` → 从 URL 添加：
 
 ```
 https://fastly.jsdelivr.net/gh/UserC23/cnads-loon@main/CainiaoAds.plugin
 ```
 
-添加后确认插件已启用即可，**不用开 MITM，也不用装证书**。
+### 3. 重启 App
 
-### 关于 CDN 地址
+菜鸟**上滑彻底杀掉**再重开，广告才会消失。App 有缓存，只切后台不杀进程无效。
 
-`cdn.jsdelivr.net` 主域和 `raw.githubusercontent.com` 在国内经常被污染或直连不通，
-所以上面用的是 jsDelivr 的 **fastly** 子域。以下地址均已实测可通，可任选：
+### CDN 地址实测
 
 | 地址 | 实测 |
 |---|---|
@@ -37,78 +44,70 @@ https://fastly.jsdelivr.net/gh/UserC23/cnads-loon@main/CainiaoAds.plugin
 | `https://cdn.jsdelivr.net/gh/...` | ❌ 主域被污染 |
 | `https://raw.githubusercontent.com/...` | ❌ 直连不通 |
 
-> jsDelivr 有缓存（约 12 小时）。仓库更新后想立刻生效，把地址里的 `@main`
-> 换成具体的 commit SHA。
-
-### 其他客户端
-
-`rules/CainiaoAds.list` 是通用规则列表，Surge / Shadowrocket / Stash 可直接作为
-remote rule 引用：
-
-```
-https://fastly.jsdelivr.net/gh/UserC23/cnads-loon@main/rules/CainiaoAds.list
-```
-
-Quantumult X 需要改关键字（文件头有说明）：`DOMAIN-SUFFIX` → `HOST-SUFFIX`，
-`DOMAIN` → `HOST`。
+jsDelivr 缓存约 12 小时。仓库更新后想立刻生效，把 `@main` 换成具体 commit SHA。
 
 ---
 
-## 拦了什么
+## 做了什么
 
-| 广告生态 | 域名 |
+### 广告位接口拦截（`reject-dict`）
+
+| 接口 | 说明 |
 |---|---|
-| 1RTB | `sdk.1rtb.net` |
-| 穿山甲 / 巨量引擎 | `*.pglstatp-toutiao.com`、`pgdt.ugdtimg.com`、`p26-sign.douyinpic.com`、`*.ctobsnssdk.com` |
-| 阿里妈妈 / TanX | `*.tanx.com`、`h-adashx.ut.cainiao.com`、`admonitor-feedback.cn-hangzhou.log.aliyuncs.com` |
-| 神马 / UC | `huichuan-mc.sm.cn`、`image.uczzd.cn` |
+| `mtop.cainiao.guoguo.nbnetflow.ads.*` | 广告位主接口：批量拉取 / 曝光回执 / 索引 |
+| `mtop.cainiao.adx.flyad.getad` | 飞猪广告位 |
+| `mtop.cainiao.adkeyword.get` | 搜索栏广告关键词 |
+| `mtop.cainiao.nbopen.miniapp.recommend.cpc` | 小程序推荐位 CPC |
+| `mtop.cainiao.nbmensa.research.researchservice.*` | 打断式调研弹窗 |
+| `com.cainiao.cnactivitycenter` 等 | 营销/活动弹窗 |
+
+用 `reject-dict` 返回 `{}` 而不是断连 —— App 解析成"无广告"，广告容器渲染为空，
+不会白屏也不会报网络错误。
+
+### 页面响应体改写（`http-response-jq`）
+
+页面引擎接口（`mtop.cainiao.app.e2e.engine.page.fetch`）里，广告是跟正常内容混在
+一个 JSON 里返回的。不能整包拒绝，只能定点删除：
+
+```jq
+del(.data.data.data.mainSearch.bizData.searchContents, .data.data.data.operationList)
+```
+
+### 域名级拦截（保留 v1）
+
+1RTB、穿山甲/巨量、阿里妈妈 TanX、神马汇川，共 14 个域名。这些是第三方广告 SDK
+的素材与上报链路，拦掉能减少下载和上报，但**不是广告内容的下发通道**。
 
 ## 故意没拦
 
-这三类拦了得不偿失，插件里以注释形式写明了原因：
-
 | 域名 | 原因 |
 |---|---|
-| `amdc.m.taobao.com` | 阿里 MTop **域名调度中心**，不是广告。本次抓包 281/285 条请求都打在这里，但它一旦被拦，App 大批业务域名解析失败 |
-| `ynuf.aliapp.org`、`fourier.taobao.com`、`fourier.alibaba.com` | 设备指纹/风控链路。拦掉可能触发验证码、限流甚至降权 |
-| `gm.mmstat.com` 等 | 统计埋点，不是广告。需要极致干净的可以手动打开注释 |
+| `amdc.m.taobao.com` | MTop 域名调度中心，不是广告。插件里给了按 UA 限定的可选拦截，默认关闭 |
+| `ynuf.aliapp.org`、`fourier.taobao.com`、`fourier.alibaba.com` | 设备指纹，拦了有触发风控的风险 |
+
+---
+
+## 有残留广告怎么办
+
+不保证你这个 App 版本全中，接口名会随版本变化。定位流程写在这里：
+[docs/mitm-guide.md 第四节](docs/mitm-guide.md#四还有残留广告怎么定位)
+
+一句话版本：开 Loon 请求日志 → 进有广告的页面 → 找响应体大的 `*-mtop.cainiao.com`
+请求 → 看响应里的广告字段 → 补一条规则。
 
 ---
 
 ## 文件结构
 
 ```
-CainiaoAds.plugin         Loon 插件（主文件）
-rules/CainiaoAds.list     通用规则列表（Surge / Shadowrocket / Stash）
-docs/analysis.md          抓包分析全过程与结论
-tools/analyze_har.py      可复用的 HAR 分析脚本
+CainiaoAds.plugin       Loon 插件（MITM 版，主文件）
+rules/CainiaoAds.list   纯域名规则（辅助层，Surge/Shadowrocket/Stash 可用）
+docs/mitm-guide.md      MITM 安装、验证、调优、排错
+docs/analysis.md        抓包分析（285 条请求 / 68 调度域名）
+tools/analyze_har.py    HAR 分析脚本
 ```
-
-## 自己补充规则
-
-多抓几个页面（首页下滑、领券中心、签到页），导出 HAR 后跑：
-
-```bash
-python tools/analyze_har.py your.har --all      # 全貌
-python tools/analyze_har.py your.har --ads      # 只看广告域名
-```
-
-`--ads` 会输出候选域名和规则草稿。**共享域要手动收窄**——比如
-`admonitor-feedback.cn-hangzhou.log.aliyuncs.com` 必须用精确 `DOMAIN`，
-写成 `log.aliyuncs.com` 后缀会连带干掉阿里云上所有业务日志。
-
----
-
-## 已知局限
-
-这份分析基于**一次**抓包、**一个**页面路径。菜鸟不同页面可能拉不同的广告位，
-域名集合会比现在更大。另外抓包里 98% 的流量是调度噪音，真实广告请求只有 1 条
-（1RTB，且返回空），所以本插件是「按 SDK 域名拦截」，不是「按实际广告响应拦截」。
-
-如果装了之后某个广告位还在，大概率是它走了业务域的 MTop 接口下发内容。
-那种情况只看域名是解不掉的，需要针对具体接口做 MITM 改写 —— 目前没有证据支撑，
-不做猜测性拦截。
 
 ## 免责
 
-仅供个人学习与自用，请自行评估使用风险。规则可能随 App 版本变化失效。
+规则整合自公开社区实践并结合本项目抓包分析整理，随 App 版本变化可能失效。
+仅供个人学习自用，请自行评估风险。
