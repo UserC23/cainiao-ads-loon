@@ -1,0 +1,78 @@
+#!name=Cainiao 去广告
+#!desc=基于 Cainiao 4iPhone 8.11.605 真机抓包整理的域名级去广告规则。纯 [Rule] 拦截，无需 MITM、无需装证书。覆盖 1RTB、穿山甲/巨量引擎、阿里妈妈 TanX、神马汇川等广告 SDK。
+#!author=UserC23
+#!homepage=https://github.com/UserC23/cnads-loon
+#!date=2026-10-31
+
+[Rule]
+# ─────────────────────────────────────────────────────────────
+# 1RTB 广告 SDK
+# 本次抓包中唯一真实发出的广告请求：
+#   POST http://sdk.1rtb.net/sdk/req_ad?app_id=116352&pid=1089329&accept_ad_type=4
+#   响应为空（status 0），即该广告位本身未填充，但请求链完整存在
+# ─────────────────────────────────────────────────────────────
+DOMAIN-SUFFIX,1rtb.net,REJECT
+
+# ─────────────────────────────────────────────────────────────
+# 穿山甲 / 巨量引擎（ByteDance Pangle）
+# 抓包内命中的素材包与签名域：
+#   sf3-fe-tos / sf6-fe-tos / p26-be-pack-sign / p3-be-pack-sign / v26-be-pack
+#   以上全部位于 pglstatp-toutiao.com 之下，一条 SUFFIX 覆盖
+# ─────────────────────────────────────────────────────────────
+DOMAIN-SUFFIX,pglstatp-toutiao.com,REJECT
+# 广告素材图床（巨量）
+DOMAIN,pgdt.ugdtimg.com,REJECT
+# 素材签名域（抖音图床，仅拦签名子域，不影响其它 douyinpic 资源）
+DOMAIN,p26-sign.douyinpic.com,REJECT
+# 穿山甲 SDK 日志上报
+DOMAIN-SUFFIX,ctobsnssdk.com,REJECT
+
+# ─────────────────────────────────────────────────────────────
+# 阿里妈妈 / TanX
+# df.tanx.com            广告投放
+# h-adashx.ut.cainiao.com 广告曝光/点击回传
+# admonitor-feedback...  广告监测回传（本次抓包调度 204 次，是最高频的一个）
+# 注意：admonitor 用的是 exact host，不要写成 log.aliyuncs.com 后缀，
+#       那会连带干掉阿里云其它业务日志
+# ─────────────────────────────────────────────────────────────
+DOMAIN-SUFFIX,tanx.com,REJECT
+DOMAIN,h-adashx.ut.cainiao.com,REJECT
+DOMAIN,admonitor-feedback.cn-hangzhou.log.aliyuncs.com,REJECT
+
+# ─────────────────────────────────────────────────────────────
+# 神马 / UC 汇川
+# huichuan-mc.sm.cn   神马「汇川」广告 SDK 配置/投放
+# image.uczzd.cn      UC 头条广告素材图床
+# 提示：若发现某些商品/活动图加载异常，优先注释掉 image.uczzd.cn
+# ─────────────────────────────────────────────────────────────
+DOMAIN,huichuan-mc.sm.cn,REJECT
+DOMAIN,image.uczzd.cn,REJECT
+
+# ─────────────────────────────────────────────────────────────
+# 同 SDK 补充（本次抓包未出现，属同一广告链路的常见域名）
+# 已知存在争议或可能误伤的都已放在注释里，需要时自行打开
+# ─────────────────────────────────────────────────────────────
+DOMAIN-SUFFIX,pangolin-sdk-toutiao.com,REJECT
+DOMAIN-SUFFIX,1rtb.com,REJECT
+
+# ─────────────────────────────────────────────────────────────
+# 可选：统计与埋点（默认关闭）
+# 这些不是广告，是阿里/腾讯的统计回传。想进一步减少后台请求再打开。
+# 打开后 app 端的部分运营数据会缺失，但功能不受影响。
+# ─────────────────────────────────────────────────────────────
+# DOMAIN,gm.mmstat.com,REJECT
+# DOMAIN,s-gm.mmstat.com,REJECT
+# DOMAIN,log.mmstat.com,REJECT
+# DOMAIN,mazu.m.qq.com,REJECT
+# DOMAIN,acjs.aliyun.com,REJECT
+
+# ─────────────────────────────────────────────────────────────
+# 明确不拦（写在这里是为了防止以后误加）
+#   amdc.m.taobao.com        阿里 MTop 动态域名调度中心，不是广告。
+#                            拦掉会导致 app 大量业务域名解析失败，
+#                            本次抓包 281/285 条请求都打在这里，纯属调度噪音。
+#   ynuf.aliapp.org          设备指纹
+#   fourier.taobao.com       设备指纹
+#   fourier.alibaba.com      设备指纹
+#                            以上三个属风控链路，拦掉有被判定异常的风险。
+# ─────────────────────────────────────────────────────────────

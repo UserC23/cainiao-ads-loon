@@ -1,0 +1,42 @@
+# Cainiao 去广告规则（通用列表）
+# 适用：Surge / Shadowrocket / Stash / Loon（作为 remote rule 引用）
+#
+# Quantumult X 用户注意：需替换关键字
+#   DOMAIN-SUFFIX  ->  HOST-SUFFIX
+#   DOMAIN         ->  HOST
+#
+# 来源：Cainiao 4iPhone 8.11.605 真机抓包（285 条请求 / 68 个调度域名）
+# 仓库：https://github.com/UserC23/cnads-loon
+
+# ── 1RTB 广告 SDK ──
+DOMAIN-SUFFIX,1rtb.net,REJECT
+DOMAIN-SUFFIX,1rtb.com,REJECT
+
+# ── 穿山甲 / 巨量引擎 ──
+DOMAIN-SUFFIX,pglstatp-toutiao.com,REJECT
+DOMAIN-SUFFIX,pangolin-sdk-toutiao.com,REJECT
+DOMAIN-SUFFIX,ctobsnssdk.com,REJECT
+DOMAIN,pgdt.ugdtimg.com,REJECT
+DOMAIN,p26-sign.douyinpic.com,REJECT
+
+# ── 阿里妈妈 / TanX ──
+DOMAIN-SUFFIX,tanx.com,REJECT
+DOMAIN,h-adashx.ut.cainiao.com,REJECT
+DOMAIN,admonitor-feedback.cn-hangzhou.log.aliyuncs.com,REJECT
+
+# ── 神马 / UC 汇川 ──
+DOMAIN,huichuan-mc.sm.cn,REJECT
+DOMAIN,image.uczzd.cn,REJECT
+
+# ── 可选：统计与埋点（非广告，默认关闭）──
+# DOMAIN,gm.mmstat.com,REJECT
+# DOMAIN,s-gm.mmstat.com,REJECT
+# DOMAIN,log.mmstat.com,REJECT
+# DOMAIN,mazu.m.qq.com,REJECT
+# DOMAIN,acjs.aliyun.com,REJECT
+
+# ── 明确不拦 ──
+# amdc.m.taobao.com       阿里 MTop 域名调度中心，拦了会断业务
+# ynuf.aliapp.org         设备指纹
+# fourier.taobao.com      设备指纹
+# fourier.alibaba.com     设备指纹
